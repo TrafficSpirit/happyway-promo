@@ -14,6 +14,23 @@ marqueeClone.setAttribute('aria-hidden', 'true');
 marqueeClone.querySelectorAll('img').forEach((image) => image.setAttribute('alt', ''));
 marqueeTrack.appendChild(marqueeClone);
 
+const howSteps = document.querySelector('.how-steps');
+if (howSteps) {
+  if (!('IntersectionObserver' in window)) {
+    howSteps.classList.add('is-visible');
+  } else {
+    const stepObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.25 });
+    stepObserver.observe(howSteps);
+  }
+}
+
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && navigation.classList.contains('open')) {
     navigation.classList.remove('open');
