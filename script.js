@@ -15,20 +15,26 @@ marqueeClone.querySelectorAll('img').forEach((image) => image.setAttribute('alt'
 marqueeTrack.appendChild(marqueeClone);
 
 const howSteps = document.querySelector('.how-steps');
-if (howSteps) {
-  if (!('IntersectionObserver' in window)) {
-    howSteps.classList.add('is-visible');
-  } else {
-    const stepObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.25 });
-    stepObserver.observe(howSteps);
-  }
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Only opt into the animated hidden state when we can reliably reveal it.
+// Otherwise the steps stay visible (their default), so nothing can get stuck.
+if (howSteps && !prefersReducedMotion && 'IntersectionObserver' in window) {
+  howSteps.classList.add('reveal');
+  const reveal = () => howSteps.classList.add('is-visible');
+  const stepObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        reveal();
+        observer.disconnect();
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+  stepObserver.observe(howSteps);
+  // Safety net: if the section is already on-screen at load, reveal next frame.
+  requestAnimationFrame(() => {
+    const rect = howSteps.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) reveal();
+  });
 }
 
 document.addEventListener('keydown', (event) => {
